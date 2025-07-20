@@ -12,7 +12,7 @@ import { MapWrapper } from '@/components/map/MapWrapper';
 import { useAuth } from '@/hooks/useAuth';
 import { firestoreService } from '@/lib/firebase/firestore';
 import { Logo } from '@/components/ui/Logo';
-import { Shield, Plus, MapIcon, List, AlertTriangle, Clock } from 'lucide-react';
+import { Shield, Plus, MapIcon, List, AlertTriangle, Clock, Bot } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -85,6 +85,12 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center py-4">
             <Logo size="md" />
             <div className="flex items-center gap-4">
+              <Link href="/assistant">
+                <Button variant="outline" className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100">
+                  <Bot className="h-4 w-4 text-blue-600" />
+                  Assistant IA
+                </Button>
+              </Link>
               <Link href="/map">
                 <Button variant="outline" className="flex items-center gap-2">
                   <MapIcon className="h-4 w-4" />

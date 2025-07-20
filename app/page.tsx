@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/ui/Logo';
-import { AlertTriangle, Users, MapPin, Phone, Camera } from 'lucide-react';
+import { AlertTriangle, Users, MapPin, Phone, Camera, Bot } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -41,6 +41,12 @@ export default function HomePage() {
               <Button size="lg" className="flex items-center gap-2 px-8 py-3">
                 <AlertTriangle className="h-5 w-5" />
                 Signaler un danger
+              </Button>
+            </Link>
+            <Link href="/assistant">
+              <Button variant="outline" size="lg" className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100">
+                <Bot className="h-5 w-5 text-blue-600" />
+                Assistant IA
               </Button>
             </Link>
             <Link href="/map">
