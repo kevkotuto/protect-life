@@ -17,7 +17,7 @@ const DEV_MODE = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBL
 // Utilisateur fictif pour les tests
 const mockUser = {
   uid: 'test-user-123',
-  phoneNumber: '+33612345678',
+  phoneNumber: '+22507123456',
   displayName: 'Utilisateur Test',
   email: 'test@protect-life.com',
 } as User;

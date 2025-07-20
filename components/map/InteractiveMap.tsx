@@ -113,7 +113,7 @@ const getStatusLabel = (status: string) => {
 
 export function InteractiveMap({ 
   reports, 
-  center = [48.8566, 2.3522], // Paris par défaut
+  center = [5.3600, -4.0083], // Abidjan, Côte d'Ivoire par défaut
   zoom = 12,
   height = '500px',
   onReportClick,

@@ -181,7 +181,7 @@ export default function MapPage() {
         ) : (
           <MapWrapper
             reports={reports}
-            center={[48.8566, 2.3522]} // Paris
+            center={[5.3600, -4.0083]} // Abidjan, Côte d'Ivoire
             zoom={12}
             height="calc(100vh - 80px)"
             onReportClick={handleReportClick}

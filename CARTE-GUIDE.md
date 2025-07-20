@@ -80,13 +80,15 @@ Une **légende flottante** est affichée en bas à gauche :
 
 ## 📊 Données affichées (Mode Test)
 
-Actuellement **5 signalements mockés** à Paris :
+Actuellement **7 signalements mockés** à Abidjan, Côte d'Ivoire :
 
-1. **🚗 Accident A6** (Élevé) - Collision, circulation ralentie
-2. **🔥 Incendie immeuble** (Critique) - Évitez le secteur  
-3. **🏗️ Nid de poule** (Moyen) - Attention véhicules
-4. **🚨 Agression** (Élevé) - Restez vigilants
-5. **🚑 Urgence cardiaque** (Critique) - Secours en route
+1. **🚗 Accident autoroute du Nord** (Élevé) - Vers aéroport, circulation ralentie
+2. **🔥 Incendie marché Cocody** (Critique) - Évitez le secteur, pompiers sur place
+3. **🏗️ Route dégradée Marcory** (Moyen) - Nids de poule importants
+4. **🚨 Vol à l'arrachée Adjamé** (Élevé) - Près du marché, restez vigilants
+5. **🚑 Urgence médicale Plateau** (Critique) - SAMU en route
+6. **🌪️ Inondations Koumassi** (Élevé) - Route inondée, circulation impossible
+7. **☣️ Déversement Treichville** (Moyen) - Près de la lagune, odeur forte
 
 ## 🚀 Navigation
 

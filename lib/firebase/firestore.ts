@@ -186,13 +186,13 @@ export class FirestoreService {
       console.log('🧪 Mock: Récupération utilisateur', userId);
       return {
         id: userId,
-        phoneNumber: '+33612345678',
-        firstName: 'Jean',
+        phoneNumber: '+22507123456',
+        firstName: 'Kouadio',
         lastName: 'Test',
         role: 'user',
         reputation: 100,
-        reportsCount: 3,
-        confirmedReportsCount: 2,
+        reportsCount: 7,
+        confirmedReportsCount: 5,
         isActive: true,
         preferences: {
           notifications: true,
