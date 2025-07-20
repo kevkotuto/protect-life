@@ -10,9 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import { VoiceRecorder } from '@/components/audio/VoiceRecorder';
 import { toast } from 'sonner';
-import { MapPin, AlertTriangle, Camera, Send } from 'lucide-react';
+import { MapPin, AlertTriangle, Camera, Send, Keyboard, Mic } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { firestoreService } from '@/lib/firebase/firestore';
 import { LocationData } from '@/types';
@@ -63,6 +65,7 @@ export function ReportForm({ onSuccess }: ReportFormProps) {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   
   const { user } = useAuth();
 
@@ -113,6 +116,25 @@ export function ReportForm({ onSuccess }: ReportFormProps) {
   useEffect(() => {
     getCurrentLocation();
   }, []);
+
+  // Gérer la transcription vocale terminée
+  const handleTranscriptionComplete = (transcription: any) => {
+    const { formatted } = transcription;
+    
+    // Remplir automatiquement le titre et la description
+    form.setValue('title', formatted.title);
+    form.setValue('description', formatted.description);
+    
+    // Basculer vers le mode texte pour permettre les modifications
+    setInputMode('text');
+    
+    toast.success('Transcription terminée ! Vous pouvez modifier le texte si nécessaire.');
+  };
+
+  // Gérer les erreurs de transcription
+  const handleTranscriptionError = (error: string) => {
+    toast.error(error);
+  };
 
   const onSubmit = async (data: ReportFormData) => {
     if (!user) {
@@ -232,45 +254,73 @@ export function ReportForm({ onSuccess }: ReportFormProps) {
               )}
             />
 
-            {/* Titre */}
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Titre du signalement</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Décrivez brièvement le danger..." {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Un titre court et descriptif (5-100 caractères)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Mode de saisie - Clavier ou Vocal */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-medium">Mode de saisie :</div>
+                <Tabs value={inputMode} onValueChange={(value) => setInputMode(value as 'text' | 'voice')} className="w-auto">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="text" className="flex items-center gap-2">
+                      <Keyboard className="h-4 w-4" />
+                      Clavier
+                    </TabsTrigger>
+                    <TabsTrigger value="voice" className="flex items-center gap-2">
+                      <Mic className="h-4 w-4" />
+                      Vocal
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
 
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description détaillée</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Décrivez en détail la situation, ce que vous avez observé..."
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Plus d'informations aideront les autres utilisateurs
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+              {inputMode === 'text' ? (
+                <div className="space-y-4">
+                  {/* Titre */}
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Titre du signalement</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Décrivez brièvement le danger..." {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Un titre court et descriptif (5-100 caractères)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Description */}
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description détaillée</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Décrivez en détail la situation, ce que vous avez observé..."
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Plus d'informations aideront les autres utilisateurs
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ) : (
+                <VoiceRecorder
+                  onTranscriptionComplete={handleTranscriptionComplete}
+                  onError={handleTranscriptionError}
+                />
               )}
-            />
+            </div>
 
             {/* Adresse */}
             <FormField

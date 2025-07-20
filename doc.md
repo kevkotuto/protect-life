@@ -16,10 +16,12 @@
 12. [Services et API](#services-et-api)
 13. [Géolocalisation](#géolocalisation)
 14. [Upload d'Images](#upload-dimages)
-15. [Notifications](#notifications)
-16. [Déploiement](#déploiement)
-17. [Tests](#tests)
-18. [Sécurité](#sécurité)
+15. [Transcription Vocale](#transcription-vocale)
+16. [Intelligence Artificielle](#intelligence-artificielle)
+17. [Notifications](#notifications)
+18. [Déploiement](#déploiement)
+19. [Tests](#tests)
+20. [Sécurité](#sécurité)
 
 ## 🎯 Vue d'ensemble
 
@@ -1666,6 +1668,435 @@ export function securityHeaders(request: NextRequest) {
 }
 ```
 
+## 🎤 Transcription Vocale
+
+### 1. Vue d'ensemble
+
+La transcription vocale permet aux utilisateurs de créer des signalements en enregistrant un message vocal qui sera automatiquement transcrit et formaté.
+
+**Pipeline de traitement :**
+1. **Enregistrement** → Interface intuitive avec MediaRecorder API
+2. **Whisper** → Transcription audio haute précision (OpenAI)
+3. **GPT-4o-mini** → Amélioration et structuration du texte
+4. **Auto-remplissage** → Titre et description générés automatiquement
+
+### 2. Service de Transcription
+
+```typescript
+// lib/ai/speechTranscription.ts
+import OpenAI from 'openai';
+import { chatModel } from './config';
+
+export class SpeechTranscriptionService {
+  private openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  async transcribeAudio(audioBlob: Blob): Promise<TranscriptionResult | null> {
+    try {
+      // Créer un File à partir du Blob
+      const audioFile = new File([audioBlob], 'audio.webm', { type: 'audio/webm' });
+
+      // Transcrire avec Whisper
+      const transcription = await this.openai.audio.transcriptions.create({
+        file: audioFile,
+        model: 'whisper-1',
+        language: 'fr',
+        prompt: 'Signalement d\'urgence à Abidjan, Côte d\'Ivoire. Quartiers: Cocody, Plateau, Adjamé, Marcory, Koumassi, Treichville.',
+      });
+
+      // Améliorer la transcription avec GPT-4o-mini
+      const improvedText = await this.improvementChain.invoke({
+        originalText: transcription.text
+      });
+
+      return {
+        originalText: transcription.text,
+        improvedText: improvedText.trim(),
+        confidence: 90,
+        language: 'fr'
+      };
+    } catch (error) {
+      console.error('Erreur lors de la transcription:', error);
+      return null;
+    }
+  }
+
+  formatForReport(transcription: TranscriptionResult): { title: string; description: string } {
+    const text = transcription.improvedText;
+    
+    // Extraire un titre (première phrase)
+    const sentences = text.split(/[.!?]+/);
+    let title = sentences[0]?.trim() || 'Signalement vocal';
+    
+    if (title.length > 50) {
+      title = title.substring(0, 47) + '...';
+    }
+    
+    return {
+      title: title || 'Signalement vocal',
+      description: text
+    };
+  }
+}
+
+export const speechTranscription = new SpeechTranscriptionService();
+```
+
+### 3. Composant d'Enregistrement Vocal
+
+```typescript
+// components/audio/VoiceRecorder.tsx
+'use client';
+
+import { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Mic, Square, Play, Upload } from 'lucide-react';
+
+export function VoiceRecorder({ onTranscriptionComplete, onError }) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      });
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      
+      const chunks: Blob[] = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        setAudioBlob(blob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      mediaRecorderRef.current = mediaRecorder;
+    } catch (error) {
+      onError?.('Impossible d\'accéder au microphone');
+    }
+  };
+
+  const transcribeAudio = async () => {
+    if (!audioBlob) return;
+
+    setIsTranscribing(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+
+      const response = await fetch('/api/ai/transcribe', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      onTranscriptionComplete?.(result);
+    } catch (error) {
+      onError?.('Erreur lors de la transcription');
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {!audioBlob ? (
+        <Button 
+          onClick={isRecording ? stopRecording : startRecording}
+          className="flex items-center gap-2"
+        >
+          {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          {isRecording ? 'Arrêter' : 'Enregistrer'}
+        </Button>
+      ) : (
+        <Button 
+          onClick={transcribeAudio}
+          disabled={isTranscribing}
+          className="flex items-center gap-2"
+        >
+          <Upload className="h-4 w-4" />
+          {isTranscribing ? 'Transcription...' : 'Transcrire'}
+        </Button>
+      )}
+    </div>
+  );
+}
+```
+
+### 4. API Route de Transcription
+
+```typescript
+// app/api/ai/transcribe/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { speechTranscription } from '@/lib/ai/speechTranscription';
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const audioFile = formData.get('audio') as File;
+
+    if (!audioFile) {
+      return NextResponse.json(
+        { error: 'Fichier audio requis' },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier la taille (max 25MB pour Whisper)
+    if (audioFile.size > 25 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: 'Fichier audio trop volumineux (max 25MB)' },
+        { status: 400 }
+      );
+    }
+
+    // Transcrire avec Whisper + GPT-4o-mini
+    const blob = new Blob([await audioFile.arrayBuffer()], { type: audioFile.type });
+    const transcriptionResult = await speechTranscription.transcribeAudio(blob);
+
+    if (!transcriptionResult) {
+      return NextResponse.json(
+        { error: 'Transcription échouée' },
+        { status: 500 }
+      );
+    }
+
+    // Formatter pour un signalement
+    const formatted = speechTranscription.formatForReport(transcriptionResult);
+
+    return NextResponse.json({
+      ...transcriptionResult,
+      formatted
+    });
+
+  } catch (error) {
+    console.error('Erreur transcription:', error);
+    return NextResponse.json(
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### 5. Intégration dans le Formulaire
+
+```typescript
+// components/reports/ReportForm.tsx (modification)
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VoiceRecorder } from '@/components/audio/VoiceRecorder';
+
+export function ReportForm() {
+  const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
+
+  const handleTranscriptionComplete = (transcription: any) => {
+    const { formatted } = transcription;
+    
+    // Remplir automatiquement le formulaire
+    form.setValue('title', formatted.title);
+    form.setValue('description', formatted.description);
+    
+    // Basculer vers le mode texte
+    setInputMode('text');
+    
+    toast.success('Transcription terminée !');
+  };
+
+  return (
+    <form>
+      {/* Mode de saisie */}
+      <Tabs value={inputMode} onValueChange={setInputMode}>
+        <TabsList>
+          <TabsTrigger value="text">
+            <Keyboard className="h-4 w-4 mr-2" />
+            Clavier
+          </TabsTrigger>
+          <TabsTrigger value="voice">
+            <Mic className="h-4 w-4 mr-2" />
+            Vocal
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="text">
+          {/* Champs de saisie classiques */}
+          <Input placeholder="Titre..." {...titleField} />
+          <Textarea placeholder="Description..." {...descField} />
+        </TabsContent>
+
+        <TabsContent value="voice">
+          <VoiceRecorder
+            onTranscriptionComplete={handleTranscriptionComplete}
+            onError={(error) => toast.error(error)}
+          />
+        </TabsContent>
+      </Tabs>
+    </form>
+  );
+}
+```
+
+## 🤖 Intelligence Artificielle
+
+### 1. Configuration OpenAI
+
+```typescript
+// lib/ai/config.ts
+import { ChatOpenAI } from '@langchain/openai';
+
+export const chatModel = new ChatOpenAI({
+  model: 'gpt-4o-mini',
+  apiKey: process.env.OPENAI_API_KEY,
+  temperature: 0.3,
+});
+
+export const isAIEnabled = () => {
+  return !!process.env.OPENAI_API_KEY;
+};
+```
+
+### 2. Analyse Intelligente des Signalements
+
+```typescript
+// lib/ai/reportAnalyzer.ts
+import { PromptTemplate } from '@langchain/core/prompts';
+import { StringOutputParser } from '@langchain/core/output_parsers';
+import { chatModel } from './config';
+
+const reportAnalysisPrompt = PromptTemplate.fromTemplate(`
+Tu es un expert en analyse de signalements d'urgence pour la ville d'Abidjan.
+
+SIGNALEMENT:
+Titre: {title}
+Description: {description}
+Lieu: {location}
+
+Analyse ce signalement et détermine:
+1. Type de danger (traffic_accident, fire, medical_emergency, crime, natural_disaster, infrastructure_issue, environmental_hazard, other)
+2. Niveau de gravité (low, medium, high, critical)
+3. Confiance dans l'analyse (0-100%)
+4. Justification de l'analyse
+5. Actions recommandées
+
+Réponds en JSON valide uniquement.
+`);
+
+export class ReportAnalyzer {
+  private analysisChain;
+
+  constructor() {
+    const outputParser = new StringOutputParser();
+    this.analysisChain = reportAnalysisPrompt.pipe(chatModel).pipe(outputParser);
+  }
+
+  async analyzeReport(title: string, description: string, location?: any) {
+    try {
+      const result = await this.analysisChain.invoke({
+        title,
+        description,
+        location: location ? `${location.latitude}, ${location.longitude}` : 'Non spécifié'
+      });
+
+      return JSON.parse(result);
+    } catch (error) {
+      console.error('Erreur analyse IA:', error);
+      return null;
+    }
+  }
+}
+
+export const reportAnalyzer = new ReportAnalyzer();
+```
+
+### 3. Assistant Sécurité IA
+
+```typescript
+// lib/ai/safetyAssistant.ts
+export class SafetyAssistant {
+  async getSecurityAdvice(question: string, location?: any) {
+    const prompt = `
+Tu es un expert en sécurité pour Abidjan, Côte d'Ivoire.
+
+Question: ${question}
+Lieu: ${location || 'Abidjan'}
+
+Fournis des conseils de sécurité spécifiques, pratiques et adaptés au contexte local d'Abidjan.
+Inclus les numéros d'urgence ivoiriens:
+- Police: 110 ou 111
+- Pompiers: 180
+- SAMU: 185
+
+Réponds en français de manière claire et actionnable.
+`;
+
+    try {
+      const response = await chatModel.invoke(prompt);
+      return response.content;
+    } catch (error) {
+      console.error('Erreur conseils sécurité:', error);
+      return null;
+    }
+  }
+}
+
+export const safetyAssistant = new SafetyAssistant();
+```
+
+### 4. Système de Fallback Intelligent
+
+Pour garantir la continuité de service, un système de fallback basé sur des règles est implémenté :
+
+```typescript
+// lib/ai/fallback.ts
+export class AIFallbackService {
+  analyzeReportFallback(title: string, description: string) {
+    // Détection par mots-clés
+    const titleLower = title.toLowerCase();
+    const descLower = description.toLowerCase();
+    
+    let dangerType = 'other';
+    if (titleLower.includes('accident') || descLower.includes('voiture')) {
+      dangerType = 'traffic_accident';
+    } else if (titleLower.includes('feu') || descLower.includes('incendie')) {
+      dangerType = 'fire';
+    }
+    // ... autres détections
+
+    let severity = 'medium';
+    if (descLower.includes('urgent') || descLower.includes('grave')) {
+      severity = 'critical';
+    }
+
+    return {
+      dangerType,
+      severity,
+      confidence: 75,
+      reasoning: `Analyse basée sur les mots-clés détectés`,
+      suggestedActions: this.getActionsByType(dangerType)
+    };
+  }
+}
+```
+
 ## 📝 Conclusion
 
 Cette documentation couvre tous les aspects essentiels pour développer l'application Protect Life avec Next.js et Firebase. Les points clés incluent :
@@ -1676,10 +2107,13 @@ Cette documentation couvre tous les aspects essentiels pour développer l'applic
 4. **Interface utilisateur** moderne avec Tailwind CSS
 5. **Géolocalisation** et cartes interactives
 6. **Upload d'images** optimisé
-7. **Notifications push** en temps réel
-8. **Tests** automatisés
-9. **Sécurité** renforcée
-10. **Déploiement** optimisé
+7. **🎤 Transcription vocale** avec OpenAI Whisper + GPT-4o-mini
+8. **🤖 Intelligence artificielle** pour analyse automatique des signalements
+9. **🛡️ Système de fallback** intelligent pour garantir la continuité
+10. **Notifications push** en temps réel
+11. **Tests** automatisés
+12. **Sécurité** renforcée
+13. **Déploiement** optimisé
 
 L'application résultante sera une PWA moderne, sécurisée et performante pour le signalement de dangers en temps réel.
 
@@ -1691,9 +2125,11 @@ L'application résultante sera une PWA moderne, sécurisée et performante pour 
 2. Implémenter l'authentification SMS
 3. Développer les composants de signalement
 4. Intégrer les cartes et la géolocalisation
-5. Ajouter les notifications push
-6. Optimiser pour la production
-7. Déployer et tester
+5. 🎤 **Configurer la transcription vocale** (Whisper + GPT-4o-mini)
+6. 🤖 **Intégrer l'IA** pour l'analyse automatique des signalements
+7. Ajouter les notifications push
+8. Optimiser pour la production
+9. Déployer et tester
 
 Cette architecture garantit une application scalable, maintenable et sécurisée pour protéger votre communauté ! 🛡️
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { reportAnalyzer } from '@/lib/ai/reportAnalyzer';
+import { aiFallback } from '@/lib/ai/fallback';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,20 +15,45 @@ export async function POST(request: NextRequest) {
 
     console.log('🤖 Analyse IA demandée:', { title, description });
 
-    const analysis = await reportAnalyzer.analyzeReport(
-      title,
-      description,
-      location
-    );
-
-    if (!analysis) {
-      return NextResponse.json(
-        { error: 'Impossible d\'analyser le signalement' },
-        { status: 500 }
+    try {
+      // Essayer d'abord l'IA OpenAI
+      const analysis = await reportAnalyzer.analyzeReport(
+        title,
+        description,
+        location
       );
+
+      if (analysis) {
+        return NextResponse.json(analysis);
+      }
+    } catch (error: any) {
+      console.warn('⚠️ API OpenAI indisponible, utilisation du mode fallback:', error.message);
+      
+      // Si erreur de quota ou API indisponible, utiliser le fallback
+      if (error.message?.includes('quota') || error.message?.includes('429') || error.message?.includes('rate')) {
+        console.log('🔄 Basculement vers l\'analyse locale...');
+        
+        const fallbackAnalysis = aiFallback.analyzeReportFallback(title, description);
+        
+        return NextResponse.json({
+          ...fallbackAnalysis,
+          fallbackMode: true,
+          notice: 'Analyse effectuée en mode local (API IA temporairement indisponible)'
+        });
+      }
+      
+      throw error; // Re-lancer l'erreur si ce n'est pas un problème de quota
     }
 
-    return NextResponse.json(analysis);
+    // Si pas de résultat mais pas d'erreur, utiliser le fallback
+    console.log('🔄 Pas de résultat IA, utilisation du fallback...');
+    const fallbackAnalysis = aiFallback.analyzeReportFallback(title, description);
+    
+    return NextResponse.json({
+      ...fallbackAnalysis,
+      fallbackMode: true,
+      notice: 'Analyse effectuée en mode local'
+    });
 
   } catch (error) {
     console.error('❌ Erreur API analyse:', error);

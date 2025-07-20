@@ -217,7 +217,18 @@ export function AIAssistant({ onAnalysisComplete, onDescriptionEnhanced }: AIAss
                 <Badge variant="outline" className="text-xs">
                   {analysis.confidence}% de confiance
                 </Badge>
+                {analysis.fallbackMode && (
+                  <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-800">
+                    Mode local
+                  </Badge>
+                )}
               </div>
+
+              {analysis.notice && (
+                <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+                  ℹ️ {analysis.notice}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                 <div>
