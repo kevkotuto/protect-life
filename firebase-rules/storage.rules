@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Règles pour les images de signalements
+    match /reports/{reportId}/{imageId} {
+      // Lecture publique pour toutes les images de signalements
+      allow read: if true;
+      
+      // Écriture : utilisateur connecté uniquement
+      allow write: if request.auth != null &&
+        // Validation du type de fichier
+        request.resource.contentType.matches('image/.*') &&
+        // Limite de taille : 5MB
+        request.resource.size < 5 * 1024 * 1024 &&
+        // Validation du nom de fichier
+        isValidImageName() &&
+        // L'utilisateur doit être le créateur du signalement ou admin
+        (isReportOwner(reportId) || hasRole('admin'));
+      
+      // Suppression : propriétaire du signalement ou admin
+      allow delete: if request.auth != null &&
+        (isReportOwner(reportId) || hasRole('admin'));
+    }
+    
+    // Règles pour les avatars utilisateurs
+    match /avatars/{userId}/{imageId} {
+      // Lecture publique pour les avatars
+      allow read: if true;
+      
+      // Écriture : seulement le propriétaire du compte
+      allow write: if request.auth != null &&
+        request.auth.uid == userId &&
+        // Validation du type de fichier
+        request.resource.contentType.matches('image/.*') &&
+        // Limite de taille : 2MB pour les avatars
+        request.resource.size < 2 * 1024 * 1024 &&
+        // Validation du nom de fichier
+        isValidImageName();
+      
+      // Suppression : propriétaire ou admin
+      allow delete: if request.auth != null &&
+        (request.auth.uid == userId || hasRole('admin'));
+    }
+    
+    // Règles par défaut - deny tout le reste
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+    
+    // Fonctions d'aide
+    
+    // Vérifier si l'utilisateur a un rôle spécifique
+    function hasRole(role) {
+      return request.auth != null &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
+    // Vérifier si l'utilisateur est le propriétaire du signalement
+    function isReportOwner(reportId) {
+      return request.auth != null &&
+        firestore.get(/databases/(default)/documents/reports/$(reportId)).data.userId == request.auth.uid;
+    }
+    
+    // Validation du nom de fichier image
+    function isValidImageName() {
+      return request.resource.name.matches('.*\\.(jpg|jpeg|png|gif|webp)$') &&
+        request.resource.name.size() < 100;
+    }
+  }
+} 

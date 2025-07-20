@@ -1,0 +1,100 @@
+[
+  {
+    "phoneNumber": "+33612345678",
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "email": "jean.dupont@email.com",
+    "role": "user",
+    "reputation": 85,
+    "reportsCount": 3,
+    "confirmedReportsCount": 2,
+    "isActive": true,
+    "preferences": {
+      "notifications": true,
+      "emailNotifications": false,
+      "pushNotifications": true,
+      "language": "fr",
+      "theme": "light"
+    },
+    "createdAt": "2024-01-10T09:00:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  },
+  {
+    "phoneNumber": "+33623456789",
+    "firstName": "Marie",
+    "lastName": "Martin",
+    "email": "marie.martin@email.com",
+    "role": "user",
+    "reputation": 120,
+    "reportsCount": 7,
+    "confirmedReportsCount": 6,
+    "isActive": true,
+    "preferences": {
+      "notifications": true,
+      "emailNotifications": true,
+      "pushNotifications": true,
+      "language": "fr",
+      "theme": "dark"
+    },
+    "createdAt": "2024-01-08T14:20:00Z",
+    "updatedAt": "2024-01-15T09:15:00Z"
+  },
+  {
+    "phoneNumber": "+33634567890",
+    "firstName": "Pierre",
+    "lastName": "Durand",
+    "role": "moderator",
+    "reputation": 200,
+    "reportsCount": 15,
+    "confirmedReportsCount": 14,
+    "isActive": true,
+    "preferences": {
+      "notifications": true,
+      "emailNotifications": true,
+      "pushNotifications": true,
+      "language": "fr",
+      "theme": "light"
+    },
+    "createdAt": "2024-01-05T11:45:00Z",
+    "updatedAt": "2024-01-15T08:00:00Z"
+  },
+  {
+    "phoneNumber": "+33645678901",
+    "firstName": "Sophie",
+    "lastName": "Bernard",
+    "email": "sophie.bernard@email.com",
+    "role": "user",
+    "reputation": 95,
+    "reportsCount": 4,
+    "confirmedReportsCount": 4,
+    "isActive": true,
+    "preferences": {
+      "notifications": true,
+      "emailNotifications": true,
+      "pushNotifications": false,
+      "language": "fr",
+      "theme": "light"
+    },
+    "createdAt": "2024-01-12T16:30:00Z",
+    "updatedAt": "2024-01-15T12:00:00Z"
+  },
+  {
+    "phoneNumber": "+33656789012",
+    "firstName": "Thomas",
+    "lastName": "Petit",
+    "role": "user",
+    "reputation": 65,
+    "reportsCount": 2,
+    "confirmedReportsCount": 1,
+    "isActive": true,
+    "preferences": {
+      "notifications": true,
+      "emailNotifications": false,
+      "pushNotifications": true,
+      "language": "fr",
+      "theme": "dark"
+    },
+    "createdAt": "2024-01-14T10:15:00Z",
+    "updatedAt": "2024-01-14T10:15:00Z"
+  }
+] 

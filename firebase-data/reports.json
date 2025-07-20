@@ -1,0 +1,157 @@
+[
+  {
+    "userId": "user123",
+    "dangerType": "traffic_accident",
+    "severity": "high",
+    "status": "pending",
+    "title": "Accident grave sur A6",
+    "description": "Collision entre deux véhicules sur l'A6 direction Lyon. Embouteillages importants, circulation difficile.",
+    "location": {
+      "_latitude": 48.8566,
+      "_longitude": 2.3522
+    },
+    "images": [],
+    "upvotes": 15,
+    "downvotes": 2,
+    "confirmations": 8,
+    "metadata": {
+      "weather": "pluvieux",
+      "timeOfDay": "matin",
+      "trafficConditions": "dense"
+    },
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  },
+  {
+    "userId": "user456",
+    "dangerType": "fire",
+    "severity": "critical",
+    "status": "confirmed",
+    "title": "Incendie dans un immeuble",
+    "description": "Feu important dans un immeuble de 5 étages. Les pompiers sont sur place. Évitez le secteur.",
+    "location": {
+      "_latitude": 48.8606,
+      "_longitude": 2.3376
+    },
+    "images": [],
+    "upvotes": 32,
+    "downvotes": 0,
+    "confirmations": 25,
+    "metadata": {
+      "weather": "sec",
+      "timeOfDay": "après-midi"
+    },
+    "createdAt": "2024-01-15T14:15:00Z",
+    "updatedAt": "2024-01-15T14:15:00Z"
+  },
+  {
+    "userId": "user789",
+    "dangerType": "infrastructure_issue",
+    "severity": "medium",
+    "status": "pending",
+    "title": "Nid de poule dangereux",
+    "description": "Gros nid de poule sur la chaussée, risque pour les véhicules et motos. Attention!",
+    "location": {
+      "_latitude": 48.8738,
+      "_longitude": 2.2975
+    },
+    "images": [],
+    "upvotes": 8,
+    "downvotes": 1,
+    "confirmations": 3,
+    "createdAt": "2024-01-14T09:45:00Z",
+    "updatedAt": "2024-01-14T09:45:00Z"
+  },
+  {
+    "userId": "user321",
+    "dangerType": "crime",
+    "severity": "high",
+    "status": "pending",
+    "title": "Tentative d'agression",
+    "description": "Tentative d'agression signalée dans ce secteur. Restez vigilants, évitez les rues sombres.",
+    "location": {
+      "_latitude": 48.8426,
+      "_longitude": 2.3209
+    },
+    "images": [],
+    "upvotes": 22,
+    "downvotes": 3,
+    "confirmations": 12,
+    "createdAt": "2024-01-14T22:30:00Z",
+    "updatedAt": "2024-01-14T22:30:00Z"
+  },
+  {
+    "userId": "user654",
+    "dangerType": "natural_disaster",
+    "severity": "medium",
+    "status": "resolved",
+    "title": "Inondation route départementale",
+    "description": "Route inondée suite aux fortes pluies. Circulation rétablie depuis ce matin.",
+    "location": {
+      "_latitude": 48.8796,
+      "_longitude": 2.3433
+    },
+    "images": [],
+    "upvotes": 18,
+    "downvotes": 0,
+    "confirmations": 15,
+    "resolvedAt": "2024-01-15T08:00:00Z",
+    "resolvedBy": "admin001",
+    "createdAt": "2024-01-13T16:20:00Z",
+    "updatedAt": "2024-01-15T08:00:00Z"
+  },
+  {
+    "userId": "user987",
+    "dangerType": "medical_emergency",
+    "severity": "critical",
+    "status": "confirmed",
+    "title": "Personne en détresse",
+    "description": "Personne en détresse cardiaque. Les secours sont prévenus et arrivent.",
+    "location": {
+      "_latitude": 48.8584,
+      "_longitude": 2.2945
+    },
+    "images": [],
+    "upvotes": 45,
+    "downvotes": 1,
+    "confirmations": 38,
+    "createdAt": "2024-01-15T11:45:00Z",
+    "updatedAt": "2024-01-15T11:45:00Z"
+  },
+  {
+    "userId": "user147",
+    "dangerType": "environmental_hazard",
+    "severity": "low",
+    "status": "pending",
+    "title": "Fuite de gaz odorante",
+    "description": "Odeur de gaz signalée dans le secteur. GrDF contacté pour vérification.",
+    "location": {
+      "_latitude": 48.8499,
+      "_longitude": 2.3488
+    },
+    "images": [],
+    "upvotes": 12,
+    "downvotes": 0,
+    "confirmations": 6,
+    "createdAt": "2024-01-14T13:20:00Z",
+    "updatedAt": "2024-01-14T13:20:00Z"
+  },
+  {
+    "userId": "user258",
+    "dangerType": "other",
+    "severity": "low",
+    "status": "pending",
+    "title": "Câbles électriques pendant",
+    "description": "Câbles électriques qui pendent dangereusement après la tempête d'hier.",
+    "location": {
+      "_latitude": 48.8466,
+      "_longitude": 2.3467
+    },
+    "images": [],
+    "upvotes": 9,
+    "downvotes": 0,
+    "confirmations": 4,
+    "createdAt": "2024-01-14T07:30:00Z",
+    "updatedAt": "2024-01-14T07:30:00Z"
+  }
+] 

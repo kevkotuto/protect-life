@@ -1,0 +1,152 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Règles pour les utilisateurs
+    match /users/{userId} {
+      // Lecture : utilisateur connecté peut lire son profil + lecture publique limitée
+      allow read: if request.auth != null && 
+        (request.auth.uid == userId || 
+         resource.data.isActive == true);
+      
+      // Écriture : seulement le propriétaire du compte
+      allow create: if request.auth != null && 
+        request.auth.uid == userId &&
+        validateUserData();
+      
+      allow update: if request.auth != null && 
+        request.auth.uid == userId &&
+        validateUserUpdate();
+      
+      // Suppression : seulement le propriétaire ou admin
+      allow delete: if request.auth != null && 
+        (request.auth.uid == userId || hasRole('admin'));
+    }
+    
+    // Règles pour les signalements
+    match /reports/{reportId} {
+      // Lecture publique pour tous les signalements actifs
+      allow read: if true;
+      
+      // Création : utilisateur connecté uniquement
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        validateReportData();
+      
+      // Mise à jour : propriétaire, modérateur ou admin
+      allow update: if request.auth != null && 
+        (request.auth.uid == resource.data.userId ||
+         hasRole('moderator') ||
+         hasRole('admin')) &&
+        validateReportUpdate();
+      
+      // Suppression : propriétaire ou admin seulement
+      allow delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId ||
+         hasRole('admin'));
+    }
+    
+    // Règles pour les votes sur signalements
+    match /reportVotes/{voteId} {
+      // Lecture : utilisateur connecté peut voir les votes
+      allow read: if request.auth != null;
+      
+      // Création : utilisateur connecté, un vote par rapport
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        validateVote() &&
+        !hasExistingVote();
+      
+      // Mise à jour : seulement le propriétaire du vote
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.userId &&
+        validateVoteUpdate();
+      
+      // Suppression : propriétaire du vote ou admin
+      allow delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId ||
+         hasRole('admin'));
+    }
+    
+    // Fonctions de validation et d'aide
+    
+    // Vérifier le rôle d'un utilisateur
+    function hasRole(role) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
+    // Validation des données utilisateur
+    function validateUserData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['phoneNumber', 'firstName', 'lastName', 'role', 'isActive']) &&
+        data.phoneNumber is string &&
+        data.firstName is string &&
+        data.lastName is string &&
+        data.role in ['user', 'moderator', 'admin'] &&
+        data.isActive is bool &&
+        data.reputation >= 0 &&
+        data.reportsCount >= 0 &&
+        data.confirmedReportsCount >= 0;
+    }
+    
+    // Validation des mises à jour utilisateur
+    function validateUserUpdate() {
+      let data = request.resource.data;
+      // Empêcher la modification du rôle par l'utilisateur lui-même
+      return !data.diff(resource.data).affectedKeys().hasAny(['role', 'phoneNumber']) ||
+        hasRole('admin');
+    }
+    
+    // Validation des données de signalement
+    function validateReportData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['userId', 'dangerType', 'severity', 'status', 'title', 'description', 'location']) &&
+        data.dangerType in ['traffic_accident', 'fire', 'medical_emergency', 'crime', 'natural_disaster', 'infrastructure_issue', 'environmental_hazard', 'other'] &&
+        data.severity in ['low', 'medium', 'high', 'critical'] &&
+        data.status in ['pending', 'confirmed', 'resolved', 'false_alarm', 'expired'] &&
+        data.title is string &&
+        data.title.size() >= 5 &&
+        data.title.size() <= 100 &&
+        data.description is string &&
+        data.description.size() >= 10 &&
+        data.description.size() <= 1000 &&
+        data.location is latlng &&
+        data.upvotes >= 0 &&
+        data.downvotes >= 0 &&
+        data.confirmations >= 0;
+    }
+    
+    // Validation des mises à jour de signalement
+    function validateReportUpdate() {
+      let data = request.resource.data;
+      // Empêcher la modification de certains champs critiques
+      return !data.diff(resource.data).affectedKeys().hasAny(['userId', 'createdAt']) &&
+        (!data.diff(resource.data).affectedKeys().hasAny(['upvotes', 'downvotes', 'confirmations']) ||
+         hasRole('moderator') ||
+         hasRole('admin'));
+    }
+    
+    // Validation des votes
+    function validateVote() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['userId', 'reportId', 'voteType']) &&
+        data.voteType in ['upvote', 'downvote', 'confirm'] &&
+        data.userId is string &&
+        data.reportId is string;
+    }
+    
+    // Vérifier qu'il n'y a pas déjà un vote existant
+    function hasExistingVote() {
+      return exists(/databases/$(database)/documents/reportVotes/$(request.auth.uid + '_' + request.resource.data.reportId));
+    }
+    
+    // Validation des mises à jour de vote
+    function validateVoteUpdate() {
+      let data = request.resource.data;
+      // Seul le type de vote peut être modifié
+      return !data.diff(resource.data).affectedKeys().hasAny(['userId', 'reportId', 'createdAt']);
+    }
+  }
+} 
